@@ -3,6 +3,7 @@ Community Manager Assistant MVP - FastAPI Backend
 Integrates Gemini AI with LangChain/LangGraph for content generation
 """
 
+import os
 from typing import Optional, List, Dict, Any, TypedDict
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
@@ -38,10 +39,9 @@ app.add_middleware(
 )
 
 # Initialize Gemini APIs
-#GEMINI_TEXT_API_KEY = os.getenv("GEMINI_TEXT_API_KEY")
-#GEMINI_IMAGE_API_KEY = os.getenv("GEMINI_IMAGE_API_KEY")
-GEMINI_TEXT_API_KEY = "AIzaSyBqytzGggkEvQxUaATmbXhK0WKRgBcSOws"
-GEMINI_IMAGE_API_KEY = "AIzaSyCAV_Af3tOOt8MgGTysm2uxb6ckDHp7-a8"
+GEMINI_TEXT_API_KEY = os.getenv("GEMINI_TEXT_API_KEY")
+GEMINI_IMAGE_API_KEY = os.getenv("GEMINI_IMAGE_API_KEY")
+
 
 
 if not GEMINI_TEXT_API_KEY:
