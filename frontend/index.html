@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente de Community Manager - MVP</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🚀 Asistente de Community Manager</h1>
+            <p class="subtitle">Genera contenido para Instagram con IA</p>
+        </header>
+
+        <main class="main-content">
+            <!-- Input Selection Section -->
+            <section class="input-section">
+                <h2>¿Cómo quieres generar contenido?</h2>
+                
+                <div class="input-tabs">
+                    <button class="tab-btn active" data-tab="text">📝 Texto</button>
+                    <button class="tab-btn" data-tab="url">🔗 URL</button>
+                    <button class="tab-btn" data-tab="image">🖼️ Imagen</button>
+                    <button class="tab-btn" data-tab="guided">🎯 Guiado</button>
+                </div>
+
+                <!-- Text Input Tab -->
+                <div class="tab-content active" id="text-tab">
+                    <div class="input-group">
+                        <label for="text-input">Describe tu tema o contexto:</label>
+                        <textarea 
+                            id="text-input" 
+                            placeholder="Ejemplo: 'Recetas veganas fáciles para principiantes que se pueden hacer en 15 minutos'"
+                            rows="4"
+                        ></textarea>
+                    </div>
+                </div>
+
+                <!-- URL Input Tab -->
+                <div class="tab-content" id="url-tab">
+                    <div class="input-group">
+                        <label for="url-input">URL del perfil de Instagram o página web:</label>
+                        <input 
+                            type="url" 
+                            id="url-input" 
+                            placeholder="https://instagram.com/perfil_ejemplo"
+                        >
+                        <small>Analizaremos el estilo y contenido para crear publicaciones similares</small>
+                    </div>
+                </div>
+
+                <!-- Image Input Tab -->
+                <div class="tab-content" id="image-tab">
+                    <div class="input-group">
+                        <label for="image-input">Sube una imagen:</label>
+                        <div class="file-upload">
+                            <input type="file" id="image-input" accept="image/*">
+                            <div class="file-upload-text">
+                                <span>📤 Arrastra una imagen aquí o haz clic para seleccionar</span>
+                            </div>
+                        </div>
+                        <div id="image-preview" class="image-preview hidden"></div>
+                    </div>
+                </div>
+
+                <!-- Guided Input Tab -->
+                <div class="tab-content" id="guided-tab">
+                    <div class="guided-form">
+                        <div class="input-group">
+                            <label for="niche-input">¿Sobre qué nicho o industria es tu cuenta?</label>
+                            <input 
+                                type="text" 
+                                id="niche-input" 
+                                placeholder="Ej: cocina vegana, fitness, tecnología..."
+                            >
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="objective-select">¿Cuál es el objetivo de tu próxima publicación?</label>
+                            <select id="objective-select">
+                                <option value="">Selecciona un objetivo</option>
+                                <option value="entretener">Entretener</option>
+                                <option value="educar">Educar</option>
+                                <option value="vender">Vender</option>
+                                <option value="inspirar">Inspirar</option>
+                                <option value="informar">Informar</option>
+                            </select>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="tone-select">¿Qué tono de voz prefieres?</label>
+                            <select id="tone-select">
+                                <option value="">Selecciona un tono</option>
+                                <option value="divertido">Divertido</option>
+                                <option value="profesional">Profesional</option>
+                                <option value="inspirador">Inspirador</option>
+                                <option value="casual">Casual</option>
+                                <option value="educativo">Educativo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="generate-btn" class="generate-btn">
+                    ✨ Generar Contenido
+                </button>
+            </section>
+
+            <!-- Loading Section -->
+            <section class="loading-section hidden" id="loading-section">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">Generando contenido increíble para ti... ⚡</p>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section hidden" id="results-section">
+                <h2>🎉 ¡Tu contenido está listo!</h2>
+                
+                <!-- Context Summary -->
+                <div class="context-summary">
+                    <h3>📋 Resumen del contexto</h3>
+                    <p id="context-text"></p>
+                </div>
+
+                <!-- Content Ideas -->
+                <div class="content-section">
+                    <h3>💡 Ideas para publicaciones</h3>
+                    <div id="ideas-container" class="ideas-grid"></div>
+                </div>
+
+                <!-- Generated Posts -->
+                <div class="content-section">
+                    <h3>✍️ Posts generados</h3>
+                    <div id="posts-container" class="posts-container"></div>
+                </div>
+
+                <!-- Visual Prompts -->
+                <div class="content-section">
+                    <h3>🎨 Prompts para imágenes</h3>
+                    <div id="visuals-container" class="visuals-container"></div>
+                </div>
+
+                <button id="new-generation-btn" class="secondary-btn">
+                    🔄 Generar nuevo contenido
+                </button>
+            </section>
+
+            <!-- Error Section -->
+            <section class="error-section hidden" id="error-section">
+                <div class="error-message">
+                    <h3>❌ Oops! Algo salió mal</h3>
+                    <p id="error-text"></p>
+                    <button id="retry-btn" class="retry-btn">🔄 Intentar de nuevo</button>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>Powered by Gemini AI + LangChain 🤖</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

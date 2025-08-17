@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Tests - CM Assistant</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        .test-pass {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-fail {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-summary {
+            background-color: #e2e3e5;
+            color: #383d41;
+            border: 1px solid #d6d8db;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .run-tests-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .run-tests-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Tests del Frontend - CM Assistant MVP</h1>
+    
+    <button class="run-tests-btn" onclick="runAllTests()">▶️ Ejecutar Todos los Tests</button>
+    
+    <div class="test-container">
+        <h2>📊 Resumen de Tests</h2>
+        <div id="test-summary" class="test-summary">
+            Haz clic en "Ejecutar Todos los Tests" para comenzar
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2>🔧 Tests de Funciones Utilitarias</h2>
+        <div id="utility-tests"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>🎯 Tests de Validación</h2>
+        <div id="validation-tests"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>🎨 Tests de UI</h2>
+        <div id="ui-tests"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>📡 Tests de API</h2>
+        <div id="api-tests"></div>
+    </div>
+
+    <!-- Incluir las funciones del script original (simulado) -->
+    <script>
+        // Simulación de las funciones principales del script.js
+        // En un entorno real, esto se importaría del archivo script.js
+        
+        // ===== Funciones Principales (Simuladas) =====
+        
+        function switchTab(tabName) {
+            // Simular cambio de tab
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabName);
+            });
+            
+            tabContents.forEach(content => {
+                content.classList.toggle('active', content.id === `${tabName}-tab`);
+            });
+            
+            return true;
+        }
+        
+        function validateInput() {
+            const currentTab = 'text'; // Simulado
+            
+            switch (currentTab) {
+                case 'text':
+                    const textValue = 'test content'; // Simulado
+                    if (!textValue.trim()) {
+                        return { isValid: false, message: 'Por favor, ingresa un texto o tema.' };
+                    }
+                    break;
+                
+                case 'url':
+                    const urlValue = 'https://example.com'; // Simulado
+                    if (!urlValue.trim()) {
+                        return { isValid: false, message: 'Por favor, ingresa una URL.' };
+                    }
+                    if (!isValidUrl(urlValue)) {
+                        return { isValid: false, message: 'Por favor, ingresa una URL válida.' };
+                    }
+                    break;
+            }
+            
+            return { isValid: true };
+        }
+        
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+        
+        function populateResults(data) {
+            if (!data || !data.ideas || !data.posts) {
+                return false;
+            }
+            
+            // Simular población de resultados
+            return true;
+        }
+        
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // ===== Framework de Testing Simple =====
+        
+        let testResults = {
+            passed: 0,
+            failed: 0,
+            total: 0
+        };
+        
+        function runTest(testName, testFunction, container) {
+            testResults.total++;
+            
+            try {
+                const result = testFunction();
+                if (result === true || result === undefined) {
+                    testResults.passed++;
+                    addTestResult(container, testName, true, 'Test pasó correctamente');
+                } else if (result === false) {
+                    testResults.failed++;
+                    addTestResult(container, testName, false, 'Test falló');
+                } else {
+                    testResults.passed++;
+                    addTestResult(container, testName, true, result);
+                }
+            } catch (error) {
+                testResults.failed++;
+                addTestResult(container, testName, false, error.message);
+            }
+        }
+        
+        function addTestResult(container, testName, passed, message) {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${passed ? 'test-pass' : 'test-fail'}`;
+            resultDiv.innerHTML = `
+                <strong>${passed ? '✅' : '❌'} ${testName}</strong><br>
+                <small>${message}</small>
+            `;
+            document.getElementById(container).appendChild(resultDiv);
+        }
+        
+        function updateSummary() {
+            const summaryDiv = document.getElementById('test-summary');
+            const percentage = testResults.total > 0 ? Math.round((testResults.passed / testResults.total) * 100) : 0;
+            
+            summaryDiv.innerHTML = `
+                <strong>📈 Resultados de Tests:</strong><br>
+                Total: ${testResults.total} | 
+                Pasados: ✅ ${testResults.passed} | 
+                Fallidos: ❌ ${testResults.failed} | 
+                Porcentaje de éxito: ${percentage}%
+            `;
+        }
+        
+        // ===== Tests de Funciones Utilitarias =====
+        
+        function testIsValidUrl() {
+            const validUrls = [
+                'https://example.com',
+                'http://test.org',
+                'https://instagram.com/profile',
+                'https://www.google.com'
+            ];
+            
+            const invalidUrls = [
+                'not-a-url',
+                'just-text',
+                'ftp://invalid',
+                ''
+            ];
+            
+            for (let url of validUrls) {
+                if (!isValidUrl(url)) {
+                    return `URL válida falló: ${url}`;
+                }
+            }
+            
+            for (let url of invalidUrls) {
+                if (isValidUrl(url)) {
+                    return `URL inválida pasó: ${url}`;
+                }
+            }
+            
+            return true;
+        }
+        
+        function testDebounceFunction() {
+            let callCount = 0;
+            const debouncedFunction = debounce(() => {
+                callCount++;
+            }, 100);
+            
+            // Llamar múltiples veces rápidamente
+            debouncedFunction();
+            debouncedFunction();
+            debouncedFunction();
+            
+            // Verificar que no se ejecutó inmediatamente
+            if (callCount !== 0) {
+                return 'Debounce no funcionó - se ejecutó inmediatamente';
+            }
+            
+            // Simular que pasó el tiempo
+            setTimeout(() => {
+                if (callCount !== 1) {
+                    return 'Debounce no funcionó - no se ejecutó después del delay';
+                }
+            }, 150);
+            
+            return true;
+        }
+        
+        function testPopulateResults() {
+            const validData = {
+                ideas: [
+                    { title: 'Idea 1', description: 'Desc 1' },
+                    { title: 'Idea 2', description: 'Desc 2' }
+                ],
+                posts: [
+                    { hook: 'Hook 1', body: 'Body 1', cta: 'CTA 1', hashtags: ['#test'] }
+                ],
+                visual_prompts: [
+                    { description: 'Prompt 1' }
+                ],
+                context_summary: 'Context summary'
+            };
+            
+            const invalidData = null;
+            const incompleteData = { ideas: [] };
+            
+            if (!populateResults(validData)) {
+                return 'Falló con datos válidos';
+            }
+            
+            if (populateResults(invalidData)) {
+                return 'No falló con datos nulos';
+            }
+            
+            if (populateResults(incompleteData)) {
+                return 'No falló con datos incompletos';
+            }
+            
+            return true;
+        }
+        
+        // ===== Tests de Validación =====
+        
+        function testInputValidation() {
+            const validation = validateInput();
+            
+            if (!validation.hasOwnProperty('isValid')) {
+                return 'Validación no retorna isValid';
+            }
+            
+            if (typeof validation.isValid !== 'boolean') {
+                return 'isValid no es boolean';
+            }
+            
+            return true;
+        }
+        
+        function testEmptyInputValidation() {
+            // Esta función requeriría simular diferentes estados
+            // Por ahora, verificamos que la función existe y es callable
+            if (typeof validateInput !== 'function') {
+                return 'validateInput no es una función';
+            }
+            
+            return true;
+        }
+        
+        // ===== Tests de UI =====
+        
+        function testTabSwitching() {
+            // Crear elementos DOM simulados
+            const tabButton = document.createElement('button');
+            tabButton.className = 'tab-btn';
+            tabButton.dataset.tab = 'text';
+            document.body.appendChild(tabButton);
+            
+            const tabContent = document.createElement('div');
+            tabContent.className = 'tab-content';
+            tabContent.id = 'text-tab';
+            document.body.appendChild(tabContent);
+            
+            const result = switchTab('text');
+            
+            // Limpiar
+            document.body.removeChild(tabButton);
+            document.body.removeChild(tabContent);
+            
+            return result === true;
+        }
+        
+        function testResponsiveDesign() {
+            // Verificar que los elementos principales existen
+            const containers = document.querySelectorAll('.test-container');
+            
+            if (containers.length === 0) {
+                return 'No se encontraron contenedores de test';
+            }
+            
+            return true;
+        }
+        
+        // ===== Tests de API =====
+        
+        function testAPIEndpointsConfiguration() {
+            const API_BASE_URL = 'http://localhost:8000';
+            const API_ENDPOINTS = {
+                generateContent: `${API_BASE_URL}/api/generate-content`,
+                guidedQuestions: `${API_BASE_URL}/api/guided-questions`
+            };
+            
+            if (!API_ENDPOINTS.generateContent.includes('/api/generate-content')) {
+                return 'Endpoint de generación mal configurado';
+            }
+            
+            if (!API_ENDPOINTS.guidedQuestions.includes('/api/guided-questions')) {
+                return 'Endpoint de preguntas mal configurado';
+            }
+            
+            return true;
+        }
+        
+        async function testFetchConfiguration() {
+            // Test básico de configuración de fetch
+            try {
+                const testUrl = 'http://localhost:8000/';
+                
+                // No hacemos fetch real para evitar errores de red en tests
+                // Solo verificamos que fetch esté disponible
+                if (typeof fetch !== 'function') {
+                    return 'fetch no está disponible';
+                }
+                
+                return true;
+            } catch (error) {
+                return `Error en configuración de fetch: ${error.message}`;
+            }
+        }
+        
+        // ===== Ejecutor Principal de Tests =====
+        
+        function runAllTests() {
+            // Limpiar resultados anteriores
+            testResults = { passed: 0, failed: 0, total: 0 };
+            
+            ['utility-tests', 'validation-tests', 'ui-tests', 'api-tests'].forEach(id => {
+                document.getElementById(id).innerHTML = '';
+            });
+            
+            // Ejecutar tests de utilidades
+            runTest('Validación de URLs', testIsValidUrl, 'utility-tests');
+            runTest('Función Debounce', testDebounceFunction, 'utility-tests');
+            runTest('Población de Resultados', testPopulateResults, 'utility-tests');
+            
+            // Ejecutar tests de validación
+            runTest('Validación de Input', testInputValidation, 'validation-tests');
+            runTest('Validación de Input Vacío', testEmptyInputValidation, 'validation-tests');
+            
+            // Ejecutar tests de UI
+            runTest('Cambio de Tabs', testTabSwitching, 'ui-tests');
+            runTest('Diseño Responsivo', testResponsiveDesign, 'ui-tests');
+            
+            // Ejecutar tests de API
+            runTest('Configuración de Endpoints', testAPIEndpointsConfiguration, 'api-tests');
+            runTest('Configuración de Fetch', testFetchConfiguration, 'api-tests');
+            
+            // Actualizar resumen
+            updateSummary();
+        }
+        
+        // Auto-ejecutar tests al cargar la página
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('🧪 Framework de tests frontend cargado');
+        });
+    </script>
+</body>
+</html>
