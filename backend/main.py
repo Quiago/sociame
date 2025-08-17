@@ -3,10 +3,9 @@ Community Manager Assistant MVP - FastAPI Backend
 Integrates Gemini AI with LangChain/LangGraph for content generation
 """
 
-import os
 from typing import Optional, List, Dict, Any, TypedDict
 from io import BytesIO
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import requests
 from bs4 import BeautifulSoup
 import json
@@ -21,6 +20,7 @@ from langchain.schema import HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, END
 from dotenv import load_dotenv
+from google.genai import types
 
 # Load environment variables
 load_dotenv()
@@ -37,16 +37,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Gemini API
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    raise ValueError("GEMINI_API_KEY environment variable is required")
+# Initialize Gemini APIs
+#GEMINI_TEXT_API_KEY = os.getenv("GEMINI_TEXT_API_KEY")
+#GEMINI_IMAGE_API_KEY = os.getenv("GEMINI_IMAGE_API_KEY")
+GEMINI_TEXT_API_KEY = "AIzaSyBqytzGggkEvQxUaATmbXhK0WKRgBcSOws"
+GEMINI_IMAGE_API_KEY = "AIzaSyCAV_Af3tOOt8MgGTysm2uxb6ckDHp7-a8"
 
-genai.configure(api_key=GEMINI_API_KEY)
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=GEMINI_API_KEY)
 
-# Initialize new GenAI client for Imagen
-client = new_genai.Client(api_key=GEMINI_API_KEY)
+if not GEMINI_TEXT_API_KEY:
+    raise ValueError("GEMINI_TEXT_API_KEY environment variable is required")
+if not GEMINI_IMAGE_API_KEY:
+    raise ValueError("GEMINI_IMAGE_API_KEY environment variable is required")
+
+# Configure text generation
+genai.configure(api_key=GEMINI_TEXT_API_KEY)
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=GEMINI_TEXT_API_KEY)
+
+# Initialize GenAI client for Imagen
+client = new_genai.Client(api_key=GEMINI_IMAGE_API_KEY)
 
 # Pydantic models for request/response
 class ContentRequest(BaseModel):
@@ -66,6 +74,7 @@ class PostContent(BaseModel):
 
 class VisualPrompt(BaseModel):
     description: str
+    image_url: Optional[str] = None
 
 class ContentResponse(BaseModel):
     ideas: List[ContentIdea]
@@ -90,15 +99,22 @@ def process_text_context(text: str) -> str:
     
     Texto: {text}
     
-    Proporciona un resumen conciso del contexto que incluya:
+    Proporciona un resumen conciso del contexto en texto plano, sin formato markdown, 
+    que incluya:
     - Tema principal
     - Audiencia objetivo
     - Tono sugerido
     - Palabras clave importantes
+    
+    Responde con texto corrido, sin asteriscos, guiones, ni ningún tipo de formato markdown.
     """
     
     response = llm.invoke([HumanMessage(content=prompt)])
-    return response.content
+    # Clean markdown artifacts
+    clean_content = response.content.strip()
+    clean_content = clean_content.replace('*', '').replace('#', '').replace('-', '').replace('_', '')
+    clean_content = ' '.join(clean_content.split())  # Remove extra whitespace
+    return clean_content
 
 def process_url_context(url: str) -> str:
     """Extract context from Instagram profile URL or webpage"""
@@ -120,15 +136,21 @@ def process_url_context(url: str) -> str:
         URL: {url}
         Contenido: {text_content}
         
-        Proporciona un análisis del:
+        Proporciona un análisis en texto plano, sin formato markdown, del:
         - Estilo de contenido
         - Audiencia objetivo
         - Temas principales
         - Tono de comunicación
+        
+        Responde con texto corrido, sin asteriscos, guiones, ni ningún tipo de formato markdown.
         """
         
         response = llm.invoke([HumanMessage(content=prompt)])
-        return response.content
+        # Clean markdown artifacts
+        clean_content = response.content.strip()
+        clean_content = clean_content.replace('*', '').replace('#', '').replace('-', '').replace('_', '')
+        clean_content = ' '.join(clean_content.split())  # Remove extra whitespace
+        return clean_content
         
     except Exception as e:
         return f"Error procesando URL: {str(e)}. Usando contexto genérico."
@@ -136,7 +158,8 @@ def process_url_context(url: str) -> str:
 def process_image_context(image_data: bytes) -> str:
     """Process uploaded image to extract context using Gemini Vision"""
     try:
-        # Initialize Gemini Vision model (2.5-flash supports vision)
+        # Initialize Gemini Vision model with correct API key
+        genai.configure(api_key=GEMINI_TEXT_API_KEY)
         model = genai.GenerativeModel('gemini-2.5-flash')
         
         # Convert bytes to PIL Image
@@ -144,16 +167,22 @@ def process_image_context(image_data: bytes) -> str:
         
         prompt = """
         Analiza esta imagen y describe detalladamente lo que ves para crear contenido de Instagram relacionado.
-        Incluye:
+        Proporciona un análisis en texto plano, sin formato markdown, que incluya:
         - Descripción visual detallada
         - Posible audiencia objetivo
         - Temas o conceptos que la imagen sugiere
         - Emociones que transmite
         - Ideas de contenido relacionado
+        
+        Responde con texto corrido, sin asteriscos, guiones, ni ningún tipo de formato markdown.
         """
         
         response = model.generate_content([prompt, image])
-        return response.text
+        # Clean markdown artifacts
+        clean_content = response.text.strip()
+        clean_content = clean_content.replace('*', '').replace('#', '').replace('-', '').replace('_', '')
+        clean_content = ' '.join(clean_content.split())  # Remove extra whitespace
+        return clean_content
         
     except Exception as e:
         return f"Error procesando imagen: {str(e)}. Usando descripción genérica."
@@ -294,11 +323,91 @@ def generate_visual_prompt(idea: Dict[str, str], context: str) -> str:
     - Composición y encuadre
     - Elementos visuales específicos relacionados con el tema
     
-    Responde con un prompt de máximo 100 palabras en español, sin comillas adicionales.
+    Responde con un prompt de máximo 80 palabras en inglés, optimizado para generación de imágenes.
     """
     
     response = llm.invoke([HumanMessage(content=prompt)])
     return response.content.strip()
+
+def generate_image_with_imagen(prompt: str) -> Optional[str]:
+    """Generate image using Google's Imagen API"""
+    try:
+        print(f"Generating image with prompt: {prompt}")
+        
+        # Try to generate image using the correct Imagen API syntax
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.0-flash-preview-image-generation",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                  response_modalities=['TEXT', 'IMAGE']
+                )
+            )
+
+            for part in response.candidates[0].content.parts:
+              if part.text is not None:
+                print(part.text)
+              elif part.inline_data is not None:
+                import io
+                buffer = io.BytesIO()
+                generated_image = Image.open(BytesIO((part.inline_data.data)))
+                generated_image.save(buffer, format='PNG')
+                image_data = buffer.getvalue()
+                generated_image.save("generated_image.png")
+                print(f"✅ Imagen API generated image successfully: {len(image_data)} bytes")
+                return image_data
+                
+        except Exception as img_error:
+            print(f"Imagen API error: {str(img_error)}")
+            print("Falling back to placeholder image...")
+        
+        # Fallback: Generate a placeholder image for testing
+        
+        # Create a more attractive placeholder image
+        img = Image.new('RGB', (512, 512), color='#667eea')
+        draw = ImageDraw.Draw(img)
+        
+        # Add a gradient-like effect
+        for y in range(512):
+            color_val = int(102 + (126 * y / 512))  # Gradient from #667eea to #764ba2
+            draw.rectangle([0, y, 512, y+1], fill=(102, color_val, 234))
+        
+        # Add text with better formatting
+        try:
+            font = ImageFont.load_default()
+        except Exception:
+            font = None
+        
+        # Split text into lines
+        lines = [
+            "🎨 AI Generated Image",
+            "",
+            "Prompt:",
+            prompt[:40] + "..." if len(prompt) > 40 else prompt,
+            "",
+            "📸 Placeholder Image",
+            "Real image generation in progress..."
+        ]
+        
+        y_offset = 150
+        for line in lines:
+            if font:
+                draw.text((30, y_offset), line, fill='white', font=font)
+            else:
+                draw.text((30, y_offset), line, fill='white')
+            y_offset += 25
+        
+        # Convert to bytes
+        buffer = io.BytesIO()
+        img.save(buffer, format='PNG')
+        img_data = buffer.getvalue()
+        
+        print(f"📸 Fallback placeholder generated: {len(img_data)} bytes")
+        return img_data
+        
+    except Exception as e:
+        print(f"Error in image generation: {str(e)}")
+        return None
 
 # LangGraph Workflow Definition
 def create_content_workflow():
@@ -332,12 +441,19 @@ def create_content_workflow():
             return {**state, "error": f"Error generating posts: {str(e)}"}
     
     def generate_visuals_node(state: ContentGenerationState) -> ContentGenerationState:
-        """Node to generate visual prompts"""
+        """Node to generate visual prompts and images"""
         try:
             visual_prompts = []
             for idea in state["ideas"]:
                 prompt = generate_visual_prompt(idea, state["context"])
-                visual_prompts.append(prompt)
+                # Generate actual image
+                image_data = generate_image_with_imagen(prompt)
+                
+                visual_data = {
+                    "description": prompt,
+                    "image_data": image_data
+                }
+                visual_prompts.append(visual_data)
             return {**state, "visual_prompts": visual_prompts}
         except Exception as e:
             return {**state, "error": f"Error generating visual prompts: {str(e)}"}
@@ -410,10 +526,27 @@ async def generate_content(
             raise HTTPException(status_code=500, detail=final_state["error"])
         
         # Format response
+        visual_prompts_formatted = []
+        for visual_data in final_state["visual_prompts"]:
+            if isinstance(visual_data, dict):
+                # Convert image data to base64 URL if available
+                image_url = None
+                if visual_data.get("image_data"):
+                    import base64
+                    image_url = f"data:image/png;base64,{base64.b64encode(visual_data['image_data']).decode()}"
+                
+                visual_prompts_formatted.append(VisualPrompt(
+                    description=visual_data.get("description", ""),
+                    image_url=image_url
+                ))
+            else:
+                # Fallback for old format
+                visual_prompts_formatted.append(VisualPrompt(description=visual_data))
+        
         response = ContentResponse(
             ideas=[ContentIdea(**idea) for idea in final_state["ideas"]],
             posts=[PostContent(**post) for post in final_state["posts"]],
-            visual_prompts=[VisualPrompt(description=prompt) for prompt in final_state["visual_prompts"]],
+            visual_prompts=visual_prompts_formatted,
             context_summary=context
         )
         
